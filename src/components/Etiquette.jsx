@@ -74,7 +74,7 @@ export const ETIQUETTE_ITEMS = [
     content:
       "열정적인 박수 후에 연주자들은 앙코르를 연주할 수 있습니다 – 프로그램에 나열되지 않은 추가 짧은 곡. 연주자들이 무대를 완전히 떠날 때까지 앉아서 계속 박수를 치세요. 때때로 여러 번의 앙코르가 연주됩니다. 객석 조명이 켜질 때까지 기다렸다가 떠나세요.",
   },
-];
+]; 
 
 const style = `
   @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Noto+Serif+KR:wght@300;400;500;600&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap');
