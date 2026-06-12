@@ -306,36 +306,56 @@ const style = `
     transition: width 1.2s cubic-bezier(0.4,0,0.2,1);
   }
 
-  /* ROUTINE */
-  .routine-grid {
+  /* QUIZ */
+  .quiz-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(3, 1fr);
     gap: 16px;
     margin-bottom: 48px;
   }
-  .routine-card {
+  .quiz-card {
     background: var(--warm-white);
     border: 1px solid var(--border);
     border-radius: 4px;
-    padding: 24px 28px;
+    padding: 24px 22px;
     cursor: pointer;
-    transition: border-color 0.2s, box-shadow 0.2s;
+    transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+    position: relative;
+    overflow: hidden;
   }
-  .routine-card:hover {
+  .quiz-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--gold), var(--gold-light));
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s ease;
+  }
+  .quiz-card:hover {
     border-color: var(--gold-light);
     box-shadow: 0 4px 16px var(--shadow);
+    transform: translateY(-2px);
   }
-  .routine-name {
+  .quiz-card:hover::before { transform: scaleX(1); }
+  .quiz-card-icon {
+    font-size: 24px;
+    margin-bottom: 12px;
+  }
+  .quiz-card-name {
+    font-family: 'Playfair Display', serif;
     font-size: 15px;
-    font-weight: 500;
+    font-weight: 600;
     color: var(--charcoal);
     margin-bottom: 6px;
   }
-  .routine-count {
+  .quiz-card-desc {
     font-size: 12px;
     color: var(--brown-light);
     font-weight: 300;
-    letter-spacing: 0.03em;
+    letter-spacing: 0.02em;
+    line-height: 1.5;
   }
 
   /* FOOTER */
@@ -369,7 +389,7 @@ const style = `
     .nav { padding: 0 20px; }
     .nav-menu { gap: 20px; }
     .cards-grid { grid-template-columns: 1fr; }
-    .routine-grid { grid-template-columns: 1fr; }
+    .quiz-grid { grid-template-columns: 1fr; }
     footer { flex-direction: column; gap: 12px; text-align: center; }
   }
 `;
@@ -495,17 +515,24 @@ export default function HomeScreen({ onNavigate }) {
         </div>
       </section>
 
-      {/* ROUTINE */}
+      {/* QUIZ */}
       <section className="section">
-        <div className="section-title">나의 루틴</div>
-        <div className="routine-grid">
-          <div className="routine-card" onClick={() => navigate("routine-morning")}>
-            <div className="routine-name">아침 루틴</div>
-            <div className="routine-count">5개 활동</div>
+        <div className="section-title">퀴즈 도전</div>
+        <div className="quiz-grid">
+          <div className="quiz-card" onClick={() => navigate("history-quiz")}>
+            <div className="quiz-card-icon">📖</div>
+            <div className="quiz-card-name">역사 퀴즈</div>
+            <div className="quiz-card-desc">음악사의 흐름을 테스트해보세요</div>
           </div>
-          <div className="routine-card" onClick={() => navigate("routine-evening")}>
-            <div className="routine-name">저녁 루틴</div>
-            <div className="routine-count">3개 활동</div>
+          <div className="quiz-card" onClick={() => navigate("quiz")}>
+            <div className="quiz-card-icon">🎵</div>
+            <div className="quiz-card-name">작곡가 퀴즈</div>
+            <div className="quiz-card-desc">위대한 작곡가들을 얼마나 아는지 확인하세요</div>
+          </div>
+          <div className="quiz-card" onClick={() => navigate("etiquette-quiz")}>
+            <div className="quiz-card-icon">✨</div>
+            <div className="quiz-card-name">에티켓 퀴즈</div>
+            <div className="quiz-card-desc">공연장 예절을 완벽하게 익혀보세요</div>
           </div>
         </div>
       </section>

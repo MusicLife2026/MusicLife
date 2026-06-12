@@ -89,6 +89,16 @@ const style = `
   .fav-remove:hover { background: rgba(44,40,32,0.09); color: var(--charcoal); }
   .era-icon { width: 40px; height: 40px; border-radius: 2px; background: var(--gold-pale); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-family: 'Cormorant Garamond', serif; font-size: 20px; color: var(--gold); flex-shrink: 0; }
 
+  .quiz-score-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 40px; }
+  .quiz-score-card { background: var(--warm-white); border: 1px solid var(--border); border-radius: 4px; padding: 20px 20px 16px; cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s; }
+  .quiz-score-card:hover { border-color: var(--gold-light); box-shadow: 0 4px 16px var(--shadow); }
+  .quiz-score-icon { font-size: 20px; margin-bottom: 10px; }
+  .quiz-score-label { font-size: 13px; font-weight: 500; color: var(--charcoal); margin-bottom: 10px; }
+  .quiz-score-num { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 700; color: var(--gold); line-height: 1; margin-bottom: 4px; }
+  .quiz-score-sub { font-size: 11px; color: var(--brown-light); font-weight: 300; letter-spacing: 0.03em; margin-bottom: 10px; }
+  .quiz-score-bar-track { height: 4px; background: var(--gold-pale); border-radius: 99px; overflow: hidden; }
+  .quiz-score-bar-fill { height: 100%; background: linear-gradient(90deg, var(--gold), var(--gold-light)); border-radius: 99px; transition: width 1.2s cubic-bezier(0.4,0,0.2,1); }
+
   .empty-box { text-align: center; padding: 36px 24px; background: var(--warm-white); border: 1px dashed var(--border); border-radius: 4px; margin-bottom: 40px; }
   .empty-icon { font-size: 28px; margin-bottom: 10px; opacity: 0.45; }
   .empty-text { font-size: 14px; font-weight: 300; color: var(--brown-light); margin-bottom: 4px; }
@@ -102,6 +112,7 @@ const style = `
     .nav { padding: 0 20px; } .nav-menu { gap: 18px; }
     .stats-row { gap: 24px; }
     .fav-grid { grid-template-columns: 1fr; }
+    .quiz-score-grid { grid-template-columns: 1fr; }
     footer { flex-direction: column; gap: 12px; text-align: center; padding: 24px 20px; }
   }
 `;
@@ -116,6 +127,9 @@ export default function MyPageScreen({ onNavigate }) {
   const [visitedEras, setVisitedEras] = useState([]);
   const [visitedComposers, setVisitedComposers] = useState([]);
   const [visitedEtiquette, setVisitedEtiquette] = useState([]);
+  const [quizHistoryBest, setQuizHistoryBest] = useState(0);
+  const [quizComposerBest, setQuizComposerBest] = useState(0);
+  const [quizEtiquetteBest, setQuizEtiquetteBest] = useState(0);
 
   useEffect(() => {
     const t = setTimeout(() => setFilled(true), 300);
@@ -127,6 +141,9 @@ export default function MyPageScreen({ onNavigate }) {
       setVisitedEras(JSON.parse(localStorage.getItem("visited_eras") || "[]"));
       setVisitedComposers(JSON.parse(localStorage.getItem("visited_composers") || "[]"));
       setVisitedEtiquette(JSON.parse(localStorage.getItem("visited_etiquette") || "[]"));
+      setQuizHistoryBest(parseInt(localStorage.getItem("quiz_history_best") || "0", 10));
+      setQuizComposerBest(parseInt(localStorage.getItem("quiz_composer_best") || "0", 10));
+      setQuizEtiquetteBest(parseInt(localStorage.getItem("quiz_etiquette_best") || "0", 10));
     } catch { }
     return () => clearTimeout(t);
   }, []);
@@ -226,6 +243,25 @@ export default function MyPageScreen({ onNavigate }) {
               </div>
               <div className="progress-track">
                 <div className="progress-fill" style={{ width: filled ? `${(done / total) * 100}%` : "0%" }} />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="section-title">퀴즈 기록</div>
+        <div className="quiz-score-grid">
+          {[
+            { icon: "📖", label: "역사 퀴즈", best: quizHistoryBest, page: "history-quiz" },
+            { icon: "🎵", label: "작곡가 퀴즈", best: quizComposerBest, page: "quiz" },
+            { icon: "✨", label: "에티켓 퀴즈", best: quizEtiquetteBest, page: "etiquette-quiz" },
+          ].map(({ icon, label, best, page }) => (
+            <div key={label} className="quiz-score-card" onClick={() => navigate(page)}>
+              <div className="quiz-score-icon">{icon}</div>
+              <div className="quiz-score-label">{label}</div>
+              <div className="quiz-score-num">{best}/5</div>
+              <div className="quiz-score-sub">{best === 0 ? "아직 도전 전" : `최고 점수 ${best * 20}점`}</div>
+              <div className="quiz-score-bar-track">
+                <div className="quiz-score-bar-fill" style={{ width: filled ? `${(best / 5) * 100}%` : "0%" }} />
               </div>
             </div>
           ))}

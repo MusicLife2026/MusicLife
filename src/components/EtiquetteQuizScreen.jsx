@@ -1,8 +1,5 @@
 import { useState, useMemo } from "react";
-import { quizData } from "../data/quizData";
-
-// quizData.js 구조: { composerId: [ {question, options, answer, explanation}, ... ] }
-// 전체 문제를 flat하게 펼친 후 셔플해서 5문제 출제
+import { etiquetteQuizData } from "../data/etiquetteQuizData";
 
 const QUIZ_COUNT = 5;
 
@@ -15,10 +12,10 @@ function shuffle(arr) {
   return a;
 }
 
-function buildPool(quizData) {
+function buildPool(data) {
   const pool = [];
-  Object.entries(quizData).forEach(([composerId, questions]) => {
-    questions.forEach(q => pool.push({ ...q, composerId }));
+  Object.entries(data).forEach(([, questions]) => {
+    questions.forEach(q => pool.push({ ...q }));
   });
   return pool;
 }
@@ -36,7 +33,6 @@ const style = `
   }
   body { font-family: 'Noto Serif KR', serif; background: var(--cream); color: var(--charcoal); min-height: 100vh; }
 
-  /* NAV */
   .nav { position: sticky; top: 0; z-index: 100; background: rgba(247,243,237,0.94); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); padding: 0 48px; display: flex; align-items: center; justify-content: space-between; height: 64px; }
   .nav-logo { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 400; letter-spacing: 0.06em; color: var(--charcoal); cursor: pointer; }
   .nav-menu { display: flex; gap: 36px; list-style: none; }
@@ -45,35 +41,28 @@ const style = `
   .nav-menu li:hover { color: var(--charcoal); }
   .nav-menu li:hover::after { width: 100%; }
 
-  /* PAGE */
   .qz-page { max-width: 680px; margin: 0 auto; padding: 36px 24px 80px; }
 
-  /* BACK */
   .qz-back { display: flex; align-items: center; gap: 6px; font-size: 14px; color: var(--brown-mid); cursor: pointer; margin-bottom: 24px; width: fit-content; transition: color 0.2s; letter-spacing: 0.02em; }
   .qz-back:hover { color: var(--charcoal); }
   .qz-back svg { flex-shrink: 0; }
 
-  /* HEADER */
   .qz-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
   .qz-title { font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 700; color: var(--navy); letter-spacing: -0.01em; }
   .qz-counter { font-size: 14px; color: var(--brown-mid); font-weight: 300; letter-spacing: 0.03em; }
 
-  /* PROGRESS BAR */
   .qz-bar-track { height: 5px; background: var(--border); border-radius: 99px; overflow: hidden; margin-bottom: 28px; }
   .qz-bar-fill { height: 100%; background: linear-gradient(90deg, var(--gold), var(--gold-light)); border-radius: 99px; transition: width 0.4s cubic-bezier(0.4,0,0.2,1); }
 
-  /* QUESTION CARD */
   .qz-card { background: var(--warm-white); border: 1px solid var(--border); border-radius: 14px; padding: 28px 32px 24px; margin-bottom: 16px; }
   .qz-question { font-size: 15px; font-weight: 400; color: var(--navy); line-height: 1.7; margin-bottom: 20px; letter-spacing: 0.01em; }
 
-  /* OPTIONS */
   .qz-options { display: flex; flex-direction: column; gap: 10px; }
   .qz-option { display: flex; align-items: center; gap: 14px; padding: 14px 18px; border: 1.5px solid var(--border); border-radius: 10px; background: var(--cream); cursor: pointer; transition: border-color 0.2s, background 0.2s, box-shadow 0.2s; }
   .qz-option:hover:not(.disabled) { border-color: var(--gold-light); background: var(--gold-pale); }
   .qz-option.selected { border-color: var(--gold); background: var(--gold-pale); }
   .qz-option.disabled { cursor: default; }
 
-  /* radio circle */
   .qz-radio { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--border); flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: border-color 0.2s, background 0.2s; }
   .qz-option.selected .qz-radio { border-color: var(--gold); background: var(--gold); }
   .qz-radio-dot { width: 8px; height: 8px; border-radius: 50%; background: #fff; opacity: 0; transition: opacity 0.15s; }
@@ -81,14 +70,12 @@ const style = `
 
   .qz-option-text { font-size: 14px; color: var(--navy); font-weight: 400; letter-spacing: 0.01em; }
 
-  /* NEXT BUTTON */
   .qz-next { width: 100%; padding: 16px; border: none; border-radius: 10px; font-family: 'Noto Serif KR', serif; font-size: 15px; font-weight: 500; letter-spacing: 0.04em; cursor: pointer; transition: background 0.25s, color 0.25s, transform 0.15s, box-shadow 0.25s; }
   .qz-next.inactive { background: #DDD8D0; color: #B0A898; cursor: not-allowed; }
   .qz-next.active { background: var(--gold); color: #fff; box-shadow: 0 4px 18px rgba(184,150,46,0.3); }
   .qz-next.active:hover { background: #9E7E22; transform: translateY(-1px); box-shadow: 0 6px 22px rgba(184,150,46,0.4); }
   .qz-next.active:active { transform: translateY(0); }
 
-  /* RESULT CARD */
   .qz-result { background: var(--warm-white); border: 1px solid var(--border); border-radius: 14px; padding: 40px 36px 32px; text-align: center; }
   .qz-result-icon { width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
   .qz-result-icon.good { background: transparent; border: 3px solid var(--gold); }
@@ -99,21 +86,18 @@ const style = `
   .qz-result-score { font-family: 'Playfair Display', serif; font-size: 48px; font-weight: 700; color: var(--navy); line-height: 1; margin-bottom: 6px; }
   .qz-result-pts { font-size: 14px; color: var(--brown-mid); font-weight: 300; margin-bottom: 24px; }
 
-  /* WRONG LIST */
   .qz-wrong-box { background: #FDF4EE; border: 1px solid #F0D8C0; border-radius: 10px; padding: 18px 20px; text-align: left; margin-bottom: 28px; }
   .qz-wrong-title { font-size: 14px; font-weight: 500; color: var(--navy); margin-bottom: 12px; }
   .qz-wrong-item { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; color: var(--brown-mid); font-weight: 300; line-height: 1.6; margin-bottom: 6px; }
   .qz-wrong-item:last-child { margin-bottom: 0; }
   .qz-wrong-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--danger); flex-shrink: 0; margin-top: 6px; }
 
-  /* RESULT BUTTONS */
   .qz-result-btns { display: flex; gap: 12px; justify-content: center; }
   .qz-btn-retry { padding: 12px 28px; background: var(--gold); color: #fff; border: none; border-radius: 8px; font-family: 'Noto Serif KR', serif; font-size: 14px; font-weight: 500; cursor: pointer; transition: background 0.2s, transform 0.15s; letter-spacing: 0.03em; }
   .qz-btn-retry:hover { background: #9E7E22; transform: translateY(-1px); }
   .qz-btn-home { padding: 12px 28px; background: #E0DBD3; color: var(--brown-mid); border: none; border-radius: 8px; font-family: 'Noto Serif KR', serif; font-size: 14px; font-weight: 400; cursor: pointer; transition: background 0.2s, transform 0.15s; letter-spacing: 0.03em; }
   .qz-btn-home:hover { background: #D0C9C0; transform: translateY(-1px); }
 
-  /* FOOTER */
   footer { border-top: 1px solid var(--border); padding: 28px 48px; display: flex; justify-content: space-between; align-items: center; }
   .footer-logo { font-family: 'Cormorant Garamond', serif; font-size: 18px; color: var(--brown-light); letter-spacing: 0.05em; }
   .footer-text { font-size: 12px; color: var(--brown-light); font-weight: 300; letter-spacing: 0.03em; }
@@ -136,19 +120,18 @@ const NAV_ITEMS = [
   { label: "내 페이지", page: "mypage" },
 ];
 
-export default function QuizScreen({ onNavigate }) {
+export default function EtiquetteQuizScreen({ onNavigate }) {
   const navigate = onNavigate || (() => {});
 
-  // 문제 풀 생성 (마운트 시 1회)
   const questions = useMemo(() => {
-    const pool = buildPool(quizData);
+    const pool = buildPool(etiquetteQuizData);
     return shuffle(pool).slice(0, QUIZ_COUNT);
   }, []);
 
-  const [current, setCurrent]       = useState(0);
-  const [selected, setSelected]     = useState(null);
-  const [answers, setAnswers]       = useState([]);
-  const [finalAnswers, setFinalAnswers] = useState(null); // null이면 진행 중, 배열이면 완료
+  const [current, setCurrent]           = useState(0);
+  const [selected, setSelected]         = useState(null);
+  const [answers, setAnswers]           = useState([]);
+  const [finalAnswers, setFinalAnswers] = useState(null);
 
   const done  = finalAnswers !== null;
   const q     = questions[current];
@@ -167,8 +150,8 @@ export default function QuizScreen({ onNavigate }) {
       setFinalAnswers(newAnswers);
       const correct = newAnswers.filter(a => a.chosen === a.answer).length;
       try {
-        const prev = parseInt(localStorage.getItem("quiz_composer_best") || "0", 10);
-        if (correct > prev) localStorage.setItem("quiz_composer_best", String(correct));
+        const prev = parseInt(localStorage.getItem("quiz_etiquette_best") || "0", 10);
+        if (correct > prev) localStorage.setItem("quiz_etiquette_best", String(correct));
       } catch {}
     } else {
       setAnswers(newAnswers);
@@ -202,8 +185,7 @@ export default function QuizScreen({ onNavigate }) {
       </nav>
 
       <div className="qz-page">
-        {/* 돌아가기 */}
-        <div className="qz-back" onClick={() => navigate("home")}>
+        <div className="qz-back" onClick={() => navigate("etiquette")}>
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
             <path d="M10 3L5 8L10 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
@@ -212,18 +194,15 @@ export default function QuizScreen({ onNavigate }) {
 
         {!done ? (
           <>
-            {/* 헤더 */}
             <div className="qz-header">
-              <div className="qz-title">작곡가 퀴즈</div>
+              <div className="qz-title">에티켓 퀴즈</div>
               <div className="qz-counter">문제 {current + 1} / {total}</div>
             </div>
 
-            {/* 진행 바 */}
             <div className="qz-bar-track">
-              <div className="qz-bar-fill" style={{ width: `${((current) / total) * 100}%` }} />
+              <div className="qz-bar-fill" style={{ width: `${(current / total) * 100}%` }} />
             </div>
 
-            {/* 문제 카드 */}
             <div className="qz-card">
               <div className="qz-question">{q.question}</div>
               <div className="qz-options">
@@ -242,7 +221,6 @@ export default function QuizScreen({ onNavigate }) {
               </div>
             </div>
 
-            {/* 다음 버튼 */}
             <button
               className={`qz-next${selected !== null ? " active" : " inactive"}`}
               onClick={handleNext}
@@ -252,9 +230,7 @@ export default function QuizScreen({ onNavigate }) {
             </button>
           </>
         ) : (
-          /* 결과 화면 */
           <div className="qz-result">
-            {/* 아이콘 */}
             <div className={`qz-result-icon ${isGood ? "good" : "bad"}`}>
               {isGood ? (
                 <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
@@ -271,7 +247,6 @@ export default function QuizScreen({ onNavigate }) {
             <div className="qz-result-score">{correctCount}/{total}</div>
             <div className="qz-result-pts">{correctCount * 20}점을 받았습니다</div>
 
-            {/* 틀린 문제 목록 */}
             {wrongAnswers.length > 0 && (
               <div className="qz-wrong-box">
                 <div className="qz-wrong-title">복습이 필요한 영역:</div>
@@ -286,7 +261,7 @@ export default function QuizScreen({ onNavigate }) {
 
             <div className="qz-result-btns">
               <button className="qz-btn-retry" onClick={handleRetry}>다시 풀기</button>
-              <button className="qz-btn-home" onClick={() => navigate("home")}>콘텐츠로 돌아가기</button>
+              <button className="qz-btn-home" onClick={() => navigate("etiquette")}>에티켓으로 돌아가기</button>
             </div>
           </div>
         )}

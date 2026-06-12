@@ -8,6 +8,8 @@ import PeopleDetailScreen from './components/PeopleDetailScreen';
 import MyPageScreen from './components/MyPageScreen';
 import EtiquetteScreen from './components/Etiquette';
 import QuizScreen from './components/QuizScreen';
+import HistoryQuizScreen from './components/HistoryQuizScreen';
+import EtiquetteQuizScreen from './components/EtiquetteQuizScreen';
 
 function App() {
   const [page, setPage] = useState('home');
@@ -31,6 +33,8 @@ function App() {
     mypage: <MyPageScreen onNavigate={navigate} />,
     etiquette: <EtiquetteScreen onNavigate={navigate} />,
     quiz: <QuizScreen onNavigate={navigate} />,
+    'history-quiz': <HistoryQuizScreen onNavigate={navigate} />,
+    'etiquette-quiz': <EtiquetteQuizScreen onNavigate={navigate} />,
   };
 
   return screens[page] || screens.home;
