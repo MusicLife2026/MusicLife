@@ -148,7 +148,7 @@ export default function EtiquetteQuizScreen({ onNavigate }) {
 
     if (current + 1 >= total) {
       setFinalAnswers(newAnswers);
-      const correct = newAnswers.filter(a => a.chosen === a.answer).length;
+      //const correct = newAnswers.filter(a => a.chosen === a.answer).length;
       try {
         const prev = parseInt(localStorage.getItem("quiz_etiquette_count") || "0", 10);
         localStorage.setItem("quiz_etiquette_count", String(prev + 1));

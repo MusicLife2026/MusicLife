@@ -148,7 +148,7 @@ export default function HistoryQuizScreen({ onNavigate }) {
 
     if (current + 1 >= total) {
       setFinalAnswers(newAnswers);
-      const correct = newAnswers.filter(a => a.chosen === a.answer).length;
+      //const correct = newAnswers.filter(a => a.chosen === a.answer).length;
       try {
         const prev = parseInt(localStorage.getItem("quiz_history_count") || "0", 10);
         localStorage.setItem("quiz_history_count", String(prev + 1));
