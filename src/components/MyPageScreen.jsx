@@ -26,9 +26,6 @@ const ERA_LETTER_COLOR = {
   baroque: "#F0E4C4", classical: "#C8EAD8", romantic: "#F4D0E8", modern: "#C8D8F0",
 };
 
-
-
-
 const style = `
   @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Noto+Serif+KR:wght@300;400;500;600&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap');
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -117,6 +114,9 @@ const style = `
   }
 `;
 
+// 퀴즈 진행 바 기준값 (이 횟수 이상이면 바 꽉 참)
+const QUIZ_BAR_MAX = 10;
+
 export default function MyPageScreen({ onNavigate }) {
   const navigate = onNavigate || (() => { });
   const [filled, setFilled] = useState(false);
@@ -127,9 +127,11 @@ export default function MyPageScreen({ onNavigate }) {
   const [visitedEras, setVisitedEras] = useState([]);
   const [visitedComposers, setVisitedComposers] = useState([]);
   const [visitedEtiquette, setVisitedEtiquette] = useState([]);
-  const [quizHistoryBest, setQuizHistoryBest] = useState(0);
-  const [quizComposerBest, setQuizComposerBest] = useState(0);
-  const [quizEtiquetteBest, setQuizEtiquetteBest] = useState(0);
+
+  // 퀴즈 푼 횟수
+  const [quizComposerCount, setQuizComposerCount]   = useState(0);
+  const [quizHistoryCount, setQuizHistoryCount]     = useState(0);
+  const [quizEtiquetteCount, setQuizEtiquetteCount] = useState(0);
 
   useEffect(() => {
     const t = setTimeout(() => setFilled(true), 300);
@@ -141,21 +143,28 @@ export default function MyPageScreen({ onNavigate }) {
       setVisitedEras(JSON.parse(localStorage.getItem("visited_eras") || "[]"));
       setVisitedComposers(JSON.parse(localStorage.getItem("visited_composers") || "[]"));
       setVisitedEtiquette(JSON.parse(localStorage.getItem("visited_etiquette") || "[]"));
-      setQuizHistoryBest(parseInt(localStorage.getItem("quiz_history_best") || "0", 10));
-      setQuizComposerBest(parseInt(localStorage.getItem("quiz_composer_best") || "0", 10));
-      setQuizEtiquetteBest(parseInt(localStorage.getItem("quiz_etiquette_best") || "0", 10));
+
+      // 퀴즈 푼 횟수 로컬스토리지에서 읽기
+      setQuizComposerCount(parseInt(localStorage.getItem("quiz_composer_count") || "0", 10));
+      setQuizHistoryCount(parseInt(localStorage.getItem("quiz_history_count") || "0", 10));
+      setQuizEtiquetteCount(parseInt(localStorage.getItem("quiz_etiquette_count") || "0", 10));
     } catch { }
     return () => clearTimeout(t);
   }, []);
 
   const progressData = [
-    { label: "역사", done: visitedEras.length, total: ERAS.length },
-    { label: "작곡가", done: visitedComposers.length, total: COMPOSERS.length },
-    { label: "에티켓", done: visitedEtiquette.length, total: ETIQUETTE_ITEMS.length },
+    { label: "역사", done: quizHistoryCount, total: ERAS.length },
+    { label: "작곡가", done: quizComposerCount, total: COMPOSERS.length },
+    { label: "에티켓", done: quizEtiquetteCount, total: ETIQUETTE_ITEMS.length },
   ];
   const totalLearned = visitedEras.length + visitedComposers.length + visitedEtiquette.length;
-
   const totalFav = favEras.length + favComposers.length + favPeople.length + favEtiqette.length;
+
+  const quizScoreData = [
+    { icon: "📖", label: "역사 퀴즈",   count: quizHistoryCount },
+    { icon: "🎵", label: "작곡가 퀴즈", count: quizComposerCount },
+    { icon: "✨", label: "에티켓 퀴즈", count: quizEtiquetteCount },
+  ];
 
   const removeEra = (id, e) => {
     e.stopPropagation();
@@ -175,24 +184,21 @@ export default function MyPageScreen({ onNavigate }) {
     setFavPeople(next);
     localStorage.setItem("fav_people", JSON.stringify(next));
   };
-  //삭제하고 로컬스토리지에 저장
   const removeEtiquette = (id, e) => {
     e.stopPropagation();
     const next = favEtiqette.filter(x => x !== id);
     setFavEtiquette(next);
     localStorage.setItem("fav_etiquette", JSON.stringify(next));
-  }
+  };
 
   const goToComposer = (id) => {
     const composer = COMPOSERS.find(c => c.id === id);
     if (composer) navigate("composer-detail", composer);
   };
-
   const goToPerson = (id) => {
     const person = PEOPLE.find(p => p.id === id);
     if (person) navigate("people-detail", person);
   };
-  //에티켓은 할필요x
 
   return (
     <>
@@ -248,164 +254,169 @@ export default function MyPageScreen({ onNavigate }) {
           ))}
         </div>
 
-        <div className="section-title">퀴즈 기록</div>
+        {/* 퀴즈 현황 */}
+        <div className="section-title">퀴즈 현황</div>
         <div className="quiz-score-grid">
-          {[
-            { icon: "📖", label: "역사 퀴즈", best: quizHistoryBest, page: "history-quiz" },
-            { icon: "🎵", label: "작곡가 퀴즈", best: quizComposerBest, page: "quiz" },
-            { icon: "✨", label: "에티켓 퀴즈", best: quizEtiquetteBest, page: "etiquette-quiz" },
-          ].map(({ icon, label, best, page }) => (
-            <div key={label} className="quiz-score-card" onClick={() => navigate(page)}>
+          {quizScoreData.map(({ icon, label, count }) => (
+            <div className="quiz-score-card" key={label} onClick={() => navigate("quiz")}>
               <div className="quiz-score-icon">{icon}</div>
               <div className="quiz-score-label">{label}</div>
-              <div className="quiz-score-num">{best}/5</div>
-              <div className="quiz-score-sub">{best === 0 ? "아직 도전 전" : `최고 점수 ${best * 20}점`}</div>
+              <div className="quiz-score-num">{count}</div>
+              <div className="quiz-score-sub">총 푼 횟수</div>
               <div className="quiz-score-bar-track">
-                <div className="quiz-score-bar-fill" style={{ width: filled ? `${(best / 5) * 100}%` : "0%" }} />
+                <div
+                  className="quiz-score-bar-fill"
+                  style={{ width: filled ? `${Math.min((count / QUIZ_BAR_MAX) * 100, 100)}%` : "0%" }}
+                />
               </div>
             </div>
           ))}
         </div>
 
-        <div className="section-title">즐겨찾기한 시대</div>
-        {favEras.length > 0 ? (
-          <div className="fav-grid">
-            {favEras.map(id => (
-              <div key={id} className="era-fav-card" onClick={() => navigate("history")}>
-                <div className="era-icon">♩</div>
-                <div>
-                  <div className="fav-name">{ERA_LABELS[id] || id}</div>
-                  <div className="fav-sub">{ERA_PERIODS[id] || ""}</div>
-                </div>
-                <button className="fav-remove" onClick={e => removeEra(id, e)}>×</button>
-              </div>
-            ))}
+        {/* 즐겨찾기 — 시대 */}
+        <div className="section-title">즐겨찾기 시대</div>
+        {favEras.length === 0 ? (
+          <div className="empty-box">
+            <div className="empty-icon">🏛️</div>
+            <div className="empty-text">즐겨찾기한 시대가 없습니다</div>
+            <div className="empty-hint">역사 페이지에서 시대를 즐겨찾기 해보세요</div>
           </div>
         ) : (
-          <div className="empty-box">
-            <div className="empty-icon">♡</div>
-            <div className="empty-text">즐겨찾기한 시대가 없습니다</div>
-            <div className="empty-hint">역사 페이지에서 ♡ 버튼을 눌러 추가해보세요</div>
+          <div className="fav-grid">
+            {favEras.map(id => {
+              const era = ERAS.find(e => e.id === id);
+              if (!era) return null;
+              const bg = ERA_BG[id] || "linear-gradient(160deg, #3D2B1F, #C4A040)";
+              const letterColor = ERA_LETTER_COLOR[id] || "#F0E4C4";
+              return (
+                <div className="fav-card" key={id} onClick={() => navigate("history")}>
+                  <div className="fav-thumb">
+                    <div className="fav-thumb-fallback" style={{ background: bg }}>
+                      <span style={{ color: letterColor, fontSize: 22, fontFamily: "'Cormorant Garamond', serif" }}>
+                        {ERA_LABELS[id]?.[0] || "♪"}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="fav-info">
+                    <div className="fav-name">{ERA_LABELS[id] || id}</div>
+                    <div className="fav-sub">{ERA_PERIODS[id] || ""}</div>
+                  </div>
+                  <button className="fav-remove" onClick={e => removeEra(id, e)}>×</button>
+                </div>
+              );
+            })}
           </div>
         )}
 
-        <div className="section-title">즐겨찾기한 작곡가</div>
-        {favComposers.length > 0 ? (
+        {/* 즐겨찾기 — 작곡가 */}
+        <div className="section-title">즐겨찾기 작곡가</div>
+        {favComposers.length === 0 ? (
+          <div className="empty-box">
+            <div className="empty-icon">🎵</div>
+            <div className="empty-text">즐겨찾기한 작곡가가 없습니다</div>
+            <div className="empty-hint">작곡가 페이지에서 즐겨찾기 해보세요</div>
+          </div>
+        ) : (
           <div className="fav-grid">
             {favComposers.map(id => {
               const composer = COMPOSERS.find(c => c.id === id);
               if (!composer) return null;
               const img = composerImages[id];
-              const bg = ERA_BG[composer.era] || ERA_BG.baroque;
+              const portrait = { baroque: ERA_BG.baroque, classical: ERA_BG.classical, romantic: ERA_BG.romantic, modern: ERA_BG.modern }[composer.era] || ERA_BG.baroque;
               const letterColor = ERA_LETTER_COLOR[composer.era] || "#F0E4C4";
               return (
-                <div key={id} className="fav-card" onClick={() => goToComposer(id)}>
-                  <div className="fav-thumb" style={{ background: bg }}>
+                <div className="fav-card" key={id} onClick={() => goToComposer(id)}>
+                  <div className="fav-thumb">
                     {img ? (
                       <img src={img} alt={composer.name} />
                     ) : (
-                      <div className="fav-thumb-fallback" style={{ color: letterColor }}>
-                        {composer.name[0]}
+                      <div className="fav-thumb-fallback" style={{ background: portrait }}>
+                        <span style={{ color: letterColor }}>{composer.name[0]}</span>
                       </div>
                     )}
                   </div>
                   <div className="fav-info">
                     <div className="fav-name">{composer.name}</div>
-                    <div className="fav-sub">{composer.eraLabel} · {composer.nat}</div>
+                    <div className="fav-sub">{composer.years} · {composer.nat}</div>
                   </div>
                   <button className="fav-remove" onClick={e => removeComposer(id, e)}>×</button>
                 </div>
               );
             })}
           </div>
-        ) : (
-          <div className="empty-box">
-            <div className="empty-icon">♡</div>
-            <div className="empty-text">즐겨찾기한 작곡가가 없습니다</div>
-            <div className="empty-hint">작곡가 페이지에서 북마크를 눌러 추가해보세요</div>
-          </div>
         )}
 
-        <div className="section-title">즐겨찾기한 역대 인물</div>
-        {favPeople.length > 0 ? (
+        {/* 즐겨찾기 — 인물 */}
+        <div className="section-title">즐겨찾기 인물</div>
+        {favPeople.length === 0 ? (
+          <div className="empty-box">
+            <div className="empty-icon">🎹</div>
+            <div className="empty-text">즐겨찾기한 인물이 없습니다</div>
+            <div className="empty-hint">역대 인물 페이지에서 즐겨찾기 해보세요</div>
+          </div>
+        ) : (
           <div className="fav-grid">
             {favPeople.map(id => {
               const person = PEOPLE.find(p => p.id === id);
               if (!person) return null;
               const img = peopleImages[id];
-              const CAT_BG = {
-                player: "linear-gradient(160deg, #1A2A4A 0%, #2E4A7A 60%, #4A6A9A 100%)",
-                conductor: "linear-gradient(160deg, #3A1A0A 0%, #6A3A1A 60%, #9A5A2A 100%)",
-                korea: "linear-gradient(160deg, #0A2A1A 0%, #1A4A2A 60%, #2A6A3A 100%)",
-              };
-              const CAT_LETTER = { player: "#C8D8F0", conductor: "#F0D8C0", korea: "#C0F0D0" };
-              const bg = CAT_BG[person.cat] || CAT_BG.player;
-              const letterColor = CAT_LETTER[person.cat] || "#C8D8F0";
               return (
-                <div key={id} className="fav-card" onClick={() => goToPerson(id)}>
-                  <div className="fav-thumb" style={{ background: bg }}>
+                <div className="fav-card" key={id} onClick={() => goToPerson(id)}>
+                  <div className="fav-thumb">
                     {img ? (
                       <img src={img} alt={person.name} />
                     ) : (
-                      <div className="fav-thumb-fallback" style={{ color: letterColor }}>
-                        {person.name[0]}
+                      <div className="fav-thumb-fallback" style={{ background: "#1A2A4A" }}>
+                        <span style={{ color: "#C8D8F0" }}>{person.name[0]}</span>
                       </div>
                     )}
                   </div>
                   <div className="fav-info">
-                    <div className="fav-name">{person.name}</div>
-                    <div className="fav-sub">{person.catLabel} · {person.nat}</div>
+                    <div className="fav-name">{person.name.replace(" ♡", "")}</div>
+                    <div className="fav-sub">{person.years} · {person.role}</div>
                   </div>
                   <button className="fav-remove" onClick={e => removePerson(id, e)}>×</button>
                 </div>
               );
             })}
           </div>
-        ) : (
-          <div className="empty-box">
-            <div className="empty-icon">♡</div>
-            <div className="empty-text">즐겨찾기한 역대 인물이 없습니다</div>
-            <div className="empty-hint">역대 인물 페이지에서 북마크를 눌러 추가해보세요</div>
-          </div>
         )}
 
-        <div className="section-title">즐겨찾기한 에티켓</div>
-        {favEtiqette.length > 0 ? (
+        {/* 즐겨찾기 — 에티켓 */}
+        <div className="section-title">즐겨찾기 에티켓</div>
+        {favEtiqette.length === 0 ? (
+          <div className="empty-box">
+            <div className="empty-icon">✨</div>
+            <div className="empty-text">즐겨찾기한 에티켓이 없습니다</div>
+            <div className="empty-hint">에티켓 페이지에서 즐겨찾기 해보세요</div>
+          </div>
+        ) : (
           <div className="fav-grid">
             {favEtiqette.map(id => {
-              const etiquette = ETIQUETTE_ITEMS.find(e => e.id === id);
-              if (!etiquette) return null;
+              const item = ETIQUETTE_ITEMS.find(e => e.id === id);
+              if (!item) return null;
               return (
-                <div key={id} className="fav-card" onClick={() => navigate("etiquette")}>
-                  <div className="fav-thumb" style={{ background: "var(--tag-bg)" }}>
-                    <div className="fav-thumb-fallback">
-                      {etiquette.emoji}
+                <div className="fav-card" key={id} onClick={() => navigate("etiquette")}>
+                  <div className="fav-thumb">
+                    <div className="fav-thumb-fallback" style={{ background: "var(--gold-pale)" }}>
+                      <span style={{ fontSize: 24 }}>{item.emoji}</span>
                     </div>
                   </div>
-
                   <div className="fav-info">
-                    <div className="fav-name">{etiquette.title}</div>
-                    <div className="fav-sub">{etiquette.subtitle}</div>
+                    <div className="fav-name">{item.title}</div>
+                    <div className="fav-sub">{item.subtitle}</div>
                   </div>
-
                   <button className="fav-remove" onClick={e => removeEtiquette(id, e)}>×</button>
                 </div>
               );
             })}
           </div>
-        ) : (
-          <div className="empty-box">
-            <div className="empty-icon">♡</div>
-            <div className="empty-text">즐겨찾기한 에티켓이 없습니다</div>
-            <div className="empty-hint">에티켓 페이지에서 ♡ 버튼을 눌러 추가해보세요</div>
-          </div>
         )}
-        {/* 섹션끝 */}
       </div>
 
       <footer>
         <div className="footer-logo">Music Life</div>
-        <div className="footer-text">My Page</div>
+        <div className="footer-text">클래식 음악의 아름다움을 함께 탐구합니다</div>
       </footer>
     </>
   );

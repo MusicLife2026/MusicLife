@@ -114,31 +114,31 @@ const style = `
 `;
 
 const NAV_ITEMS = [
-  { label: "역사",     page: "history" },
-  { label: "작곡가",   page: "composers" },
-  { label: "에티켓",   page: "etiquette" },
+  { label: "역사", page: "history" },
+  { label: "작곡가", page: "composers" },
+  { label: "에티켓", page: "etiquette" },
   { label: "내 페이지", page: "mypage" },
 ];
 
 export default function EtiquetteQuizScreen({ onNavigate }) {
-  const navigate = onNavigate || (() => {});
+  const navigate = onNavigate || (() => { });
 
   const questions = useMemo(() => {
     const pool = buildPool(etiquetteQuizData);
     return shuffle(pool).slice(0, QUIZ_COUNT);
   }, []);
 
-  const [current, setCurrent]           = useState(0);
-  const [selected, setSelected]         = useState(null);
-  const [answers, setAnswers]           = useState([]);
+  const [current, setCurrent] = useState(0);
+  const [selected, setSelected] = useState(null);
+  const [answers, setAnswers] = useState([]);
   const [finalAnswers, setFinalAnswers] = useState(null);
 
-  const done  = finalAnswers !== null;
-  const q     = questions[current];
+  const done = finalAnswers !== null;
+  const q = questions[current];
   const total = questions.length;
 
   const handleSelect = (idx) => {
-    if (selected !== null) return;
+    //if (selected !== null) return;
     setSelected(idx);
   };
 
@@ -150,9 +150,9 @@ export default function EtiquetteQuizScreen({ onNavigate }) {
       setFinalAnswers(newAnswers);
       const correct = newAnswers.filter(a => a.chosen === a.answer).length;
       try {
-        const prev = parseInt(localStorage.getItem("quiz_etiquette_best") || "0", 10);
-        if (correct > prev) localStorage.setItem("quiz_etiquette_best", String(correct));
-      } catch {}
+        const prev = parseInt(localStorage.getItem("quiz_etiquette_count") || "0", 10);
+        localStorage.setItem("quiz_etiquette_count", String(prev + 1));
+      } catch { }
     } else {
       setAnswers(newAnswers);
       setCurrent(c => c + 1);
@@ -187,7 +187,7 @@ export default function EtiquetteQuizScreen({ onNavigate }) {
       <div className="qz-page">
         <div className="qz-back" onClick={() => navigate("etiquette")}>
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d="M10 3L5 8L10 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M10 3L5 8L10 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
           돌아가기
         </div>
@@ -209,7 +209,8 @@ export default function EtiquetteQuizScreen({ onNavigate }) {
                 {q.options.map((opt, idx) => (
                   <div
                     key={idx}
-                    className={`qz-option${selected === idx ? " selected" : ""}${selected !== null ? " disabled" : ""}`}
+                    //className={`qz-option${selected === idx ? " selected" : ""}${selected !== null ? " disabled" : ""}`}
+                    className={`qz-option${selected === idx ? " selected" : ""}`}
                     onClick={() => handleSelect(idx)}
                   >
                     <div className="qz-radio">
@@ -234,11 +235,11 @@ export default function EtiquetteQuizScreen({ onNavigate }) {
             <div className={`qz-result-icon ${isGood ? "good" : "bad"}`}>
               {isGood ? (
                 <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-                  <path d="M6 14.5L11.5 20L22 9" stroke="#B8962E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M6 14.5L11.5 20L22 9" stroke="#B8962E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               ) : (
                 <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-                  <path d="M8 8L20 20M20 8L8 20" stroke="#E05A2B" strokeWidth="2.5" strokeLinecap="round"/>
+                  <path d="M8 8L20 20M20 8L8 20" stroke="#E05A2B" strokeWidth="2.5" strokeLinecap="round" />
                 </svg>
               )}
             </div>
